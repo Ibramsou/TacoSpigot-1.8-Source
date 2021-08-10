@@ -1003,6 +1003,22 @@ public final class CraftServer implements Server {
             } catch (ExceptionWorldConflict ex) {
                 getLogger().log(Level.SEVERE, null, ex);
             }
+        } else { // FlamePaper - Fix chunk memory leak
+            ChunkProviderServer chunkProviderServer = handle.chunkProviderServer;
+            ChunkRegionLoader regionLoader = (ChunkRegionLoader) chunkProviderServer.chunkLoader;
+
+            regionLoader.b.clear();
+            regionLoader.c.clear();
+
+            try {
+                FileIOThread.a().b();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+
+            chunkProviderServer.chunkLoader = null;
+            chunkProviderServer.chunkProvider = null;
+            chunkProviderServer.chunks.clear();
         }
 
         worlds.remove(world.getName().toLowerCase());

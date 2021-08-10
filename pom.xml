@@ -9,7 +9,7 @@
         <version>7</version>
     </parent>
 
-    <groupId>net.techable.tacospigot</groupId>
+    <groupId>net.techcable.tacospigot</groupId>
     <artifactId>parent</artifactId>
     <version>dev-SNAPSHOT</version>
     <packaging>pom</packaging>

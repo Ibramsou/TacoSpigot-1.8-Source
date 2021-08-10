@@ -443,7 +443,7 @@ public abstract class World implements IBlockAccess {
 
     // CraftBukkit start - Split off from original setTypeAndData(int i, int j, int k, Block block, int l, int i1) method in order to directly send client and physic updates
     public void notifyAndUpdatePhysics(BlockPosition blockposition, Chunk chunk, Block oldBlock, Block newBLock, int flag) {
-        if ((flag & 2) != 0 && (chunk == null || chunk.isReady())) {  // allow chunk to be null here as chunk.isReady() is false when we send our notification during block placement
+        if ((flag & 2) != 0 && (!this.isClientSide || (flag & 4) == 0) && (chunk == null || chunk.isReady())) {  // allow chunk to be null here as chunk.isReady() is false when we send our notification during block placement
             this.notify(blockposition);
         }
 
@@ -1096,6 +1096,7 @@ public abstract class World implements IBlockAccess {
         entity.die();
         if (entity instanceof EntityHuman) {
             this.players.remove(entity);
+            this.worldMaps.removeTrackedPlayer((EntityHuman) entity); // FlamePaper - Minetick fix memory leaks
             // Spigot start
             for ( Object o : worldMaps.c )
             {
@@ -1124,6 +1125,7 @@ public abstract class World implements IBlockAccess {
         entity.die();
         if (entity instanceof EntityHuman) {
             this.players.remove(entity);
+            this.worldMaps.removeTrackedPlayer((EntityHuman) entity); // FlamePaper - Minetick fix memory leaks
             this.everyoneSleeping();
         }
 

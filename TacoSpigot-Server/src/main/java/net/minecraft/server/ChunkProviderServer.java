@@ -36,7 +36,8 @@ public class ChunkProviderServer implements IChunkProvider {
     public LongSet unloadQueue = new LongArraySet(); // CraftBukkit - LongHashSet // TacoSpigot - LongHashSet -> HashArraySet
     public Chunk emptyChunk;
     public IChunkProvider chunkProvider;
-    private IChunkLoader chunkLoader;
+    // FlamePaper - Make chunkloader public
+    public IChunkLoader chunkLoader;
     public boolean forceChunkLoad = false; // CraftBukkit - true -> false
     public Long2ObjectMap<Chunk> chunks = new Long2ObjectOpenHashMap<Chunk>(4096, 0.5f); // TacoSpigot - use trove Long2ObjectOpenHashMap instead of craftbukkit implementation (using inital capacity and load factor chosen by Amaranth in an old impl)
     public WorldServer world;
