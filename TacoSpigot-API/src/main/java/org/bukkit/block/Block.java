@@ -65,6 +65,10 @@ public interface Block extends Metadatable {
      */
     Block getRelative(BlockFace face, int distance);
 
+    boolean setTypeId(int type, boolean applyPhysics, boolean updateLight);
+
+    boolean setTypeIdAndData(int type, byte data, boolean applyPhysics, boolean updateLight);
+
     /**
      * Gets the type of this block
      *
@@ -193,6 +197,8 @@ public interface Block extends Metadatable {
      * @param applyPhysics False to cancel physics on the changed block.
      */
     void setType(Material type, boolean applyPhysics);
+
+    void setType(Material type, boolean applyPhysics, boolean updateLight);
 
     /**
      * Sets the type-id of this block

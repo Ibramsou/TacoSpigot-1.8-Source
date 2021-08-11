@@ -23,27 +23,11 @@ public final class SpawnerCreature {
     private int getEntityCount(WorldServer server, Class oClass)
     {
         // TacoSpigot start - use entire world, not just active chunks. Spigot broke vanilla expectations.
-        if (true) {
-            return server
-                    .chunkProviderServer
-                    .chunks.values()
-                    .stream()
-                    .collect(java.util.stream.Collectors.summingInt(c -> c.entityCount.get(oClass)));
-        }
+        return server
+                .chunkProviderServer
+                .chunks.values()
+                .stream().mapToInt(c -> c.entityCount.get(oClass)).sum();
         // TacoSpigot end
-        int i = 0;
-        Iterator<Long> it = this.b.iterator();
-        while ( it.hasNext() )
-        {
-            Long coord = it.next();
-            int x = LongHash.msw( coord );
-            int z = LongHash.lsw( coord );
-            if ( !server.chunkProviderServer.unloadQueue.contains( coord ) && server.isChunkLoaded( x, z, true ) )
-            {
-                i += server.getChunkAt( x, z ).entityCount.get( oClass );
-            }
-        }
-        return i;
     }
     // Spigot end
 
@@ -81,7 +65,7 @@ public final class SpawnerCreature {
                             long chunkCoords = LongHash.toLong(i1 + l, k + j);
                             if (!this.b.contains(chunkCoords)) {
                                 ++i;
-                                if (!flag3 && worldserver.getWorldBorder().isInBounds(i1 + l, k + j)) {
+                                if (!flag3 && worldserver.isChunkLoaded(i1 + l, k + j, true) && worldserver.getWorldBorder().isInBounds(i1 + l, k + j)) { // Migot
                                     this.b.add(chunkCoords);
                                 }
                             }

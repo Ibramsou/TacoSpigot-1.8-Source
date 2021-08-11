@@ -118,25 +118,43 @@ public class CraftBlock implements Block {
 
     @Override
     public void setType(Material type, boolean applyPhysics) {
-        setTypeId(type.getId(), applyPhysics);
+        setTypeId(type.getId(), applyPhysics, true);
     }
 
+    @Override
+    public void setType(Material type, boolean applyPhysics, boolean updateLight) {
+        setTypeId(type.getId(), applyPhysics, updateLight);
+    }
+
+    @Override
     public boolean setTypeId(final int type) {
         return setTypeId(type, true);
     }
 
+    @Override
     public boolean setTypeId(final int type, final boolean applyPhysics) {
-        net.minecraft.server.Block block = getNMSBlock(type);
-        return setTypeIdAndData(type, (byte) block.toLegacyData(block.getBlockData()), applyPhysics);
+        return setTypeId(type, applyPhysics, true);
     }
 
-    public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics) {
+    @Override
+    public boolean setTypeId(final int type, final boolean applyPhysics, boolean updateLight) {
+        net.minecraft.server.Block block = getNMSBlock(type);
+        return setTypeIdAndData(type, (byte) block.toLegacyData(block.getBlockData()), applyPhysics, updateLight);
+    }
+
+    @Override
+    public boolean setTypeIdAndData(int type, byte data, boolean applyPhysics) {
+        return setTypeIdAndData(type, data, applyPhysics, true);
+    }
+
+    @Override
+    public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics, boolean updateLight) { // KigPaper - add updateLight param
         IBlockData blockData = getNMSBlock(type).fromLegacyData(data);
         BlockPosition position = new BlockPosition(x, y, z);
         if (applyPhysics) {
-            return chunk.getHandle().getWorld().setTypeAndData(position, blockData, 3);
+            return chunk.getHandle().getWorld().setTypeAndData(position, blockData, 3, updateLight);
         } else {
-            boolean success = chunk.getHandle().getWorld().setTypeAndData(position, blockData, 2);
+            boolean success = chunk.getHandle().getWorld().setTypeAndData(position, blockData, 2, updateLight);
             if (success) {
                 chunk.getHandle().getWorld().notify(position);
             }

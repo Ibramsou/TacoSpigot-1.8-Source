@@ -126,6 +126,8 @@ public class Chunk {
     }
     // CraftBukkit end
 
+    private final ChunkCoordIntPair chunkCoords;
+
     public Chunk(World world, int i, int j) {
         this.sections = new ChunkSection[16];
         this.e = new byte[256];
@@ -151,6 +153,7 @@ public class Chunk {
         if (!(this instanceof EmptyChunk)) {
             this.bukkitChunk = new org.bukkit.craftbukkit.CraftChunk(this);
         }
+        this.chunkCoords = new ChunkCoordIntPair(this.locX, this.locZ);
     }
 
     public org.bukkit.Chunk bukkitChunk;
@@ -565,8 +568,8 @@ public class Chunk {
         return this.g(blockposition.getX() & 15, blockposition.getY(), blockposition.getZ() & 15);
     }
 
-    public IBlockData a(BlockPosition blockposition, IBlockData iblockdata) {
-        int i = blockposition.getX() & 15;
+    // KigPaper - add updateLight param
+    public IBlockData a(BlockPosition blockposition, IBlockData iblockdata, boolean updateLight) {        int i = blockposition.getX() & 15;
         int j = blockposition.getY();
         int k = blockposition.getZ() & 15;
         int l = k << 4 | i;
@@ -607,9 +610,9 @@ public class Chunk {
             if (chunksection.b(i, j & 15, k) != block) {
                 return null;
             } else {
-                if (flag) {
+                if (flag && updateLight) {
                     this.initLighting();
-                } else {
+                } else if (updateLight) {
                     int j1 = block.p();
                     int k1 = block1.p();
 
@@ -1193,7 +1196,8 @@ public class Chunk {
     }
 
     public ChunkCoordIntPair j() {
-        return new ChunkCoordIntPair(this.locX, this.locZ);
+        //return new ChunkCoordIntPair(this.locX, this.locZ);
+        return this.chunkCoords;
     }
 
     public boolean c(int i, int j) {

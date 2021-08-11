@@ -1,5 +1,6 @@
 package net.minecraft.server;
 
+import java.lang.ref.WeakReference;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +25,7 @@ public abstract class EntityInsentient extends EntityLiving {
     protected NavigationAbstract navigation;
     public PathfinderGoalSelector goalSelector;
     public PathfinderGoalSelector targetSelector;
-    private EntityLiving goalTarget;
+    private WeakReference<EntityLiving> goalTarget; // KigPaper - wrap in WeakReference
     private EntitySenses bk;
     private ItemStack[] equipment = new ItemStack[5];
     public float[] dropChances = new float[5];
@@ -85,7 +86,7 @@ public abstract class EntityInsentient extends EntityLiving {
     }
 
     public EntityLiving getGoalTarget() {
-        return this.goalTarget;
+        return this.goalTarget.get(); // KigPaper - WeakReference
     }
 
     public void setGoalTarget(EntityLiving entityliving) {
@@ -118,7 +119,7 @@ public abstract class EntityInsentient extends EntityLiving {
                 entityliving = null;
             }
         }
-        this.goalTarget = entityliving;
+        this.goalTarget = new WeakReference<>(entityliving); // KigPaper - WeakReference
         // CraftBukkit end
     }
 
