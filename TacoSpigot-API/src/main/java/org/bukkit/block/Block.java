@@ -65,10 +65,6 @@ public interface Block extends Metadatable {
      */
     Block getRelative(BlockFace face, int distance);
 
-    boolean setTypeId(int type, boolean applyPhysics, boolean updateLight);
-
-    boolean setTypeIdAndData(int type, byte data, boolean applyPhysics, boolean updateLight);
-
     /**
      * Gets the type of this block
      *
@@ -196,9 +192,9 @@ public interface Block extends Metadatable {
      * @param type Material to change this block to
      * @param applyPhysics False to cancel physics on the changed block.
      */
-    void setType(Material type, boolean applyPhysics);
-
-    void setType(Material type, boolean applyPhysics, boolean updateLight);
+    default void setType(Material type, boolean applyPhysics) {
+        setType(type, applyPhysics, true); // KigPaper - add light param
+    }
 
     /**
      * Sets the type-id of this block
@@ -219,7 +215,9 @@ public interface Block extends Metadatable {
      * @deprecated Magic value
      */
     @Deprecated
-    boolean setTypeId(int type, boolean applyPhysics);
+    default boolean setTypeId(int type, boolean applyPhysics) {
+        return setTypeId(type, applyPhysics, true); // KigPaper - light param
+    }
 
     /**
      * Sets the type-id of this block
@@ -231,7 +229,9 @@ public interface Block extends Metadatable {
      * @deprecated Magic value
      */
     @Deprecated
-    boolean setTypeIdAndData(int type, byte data, boolean applyPhysics);
+    default boolean setTypeIdAndData(int type, byte data, boolean applyPhysics) {
+        return setTypeIdAndData(type, data, applyPhysics, true); // KigPaper - light param
+    }
 
     /**
      * Gets the face relation of this block compared to the given block.
@@ -395,5 +395,40 @@ public interface Block extends Metadatable {
      * @return a list of dropped items for this type of block
      */
     Collection<ItemStack> getDrops(ItemStack tool);
+
+    // KigPaper start
+    /**
+     * Sets the type-id of this block
+     *
+     * @param type Type-Id to change this block to
+     * @param data The data value to change this block to
+     * @param applyPhysics False to cancel physics on the changed block
+     * @param updateLight whether to update light in the chunk
+     * @return whether the block was changed
+     * @deprecated Magic value
+     */
+    @Deprecated
+    boolean setTypeIdAndData(int type, byte data, boolean applyPhysics, boolean updateLight);
+
+    /**
+     * Sets the type of this block
+     *
+     * @param type Material to change this block to
+     * @param applyPhysics False to cancel physics on the changed block.
+     * @param updateLight whether to update light in the chunk
+     */
+    void setType(Material type, boolean applyPhysics, boolean updateLight);
+
+    /**
+     * Sets the type-id of this block
+     *
+     * @param type Type-Id to change this block to
+     * @param applyPhysics False to cancel physics on the changed block.
+     * @param updateLight whether to update light in the chunk
+     * @return whether the block was changed
+     * @deprecated Magic value
+     */
+    boolean setTypeId(int type, boolean applyPhysics, boolean updateLight);
+    // KigPaper end
 
 }

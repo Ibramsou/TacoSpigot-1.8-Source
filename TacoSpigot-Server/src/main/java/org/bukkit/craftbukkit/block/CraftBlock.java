@@ -117,11 +117,6 @@ public class CraftBlock implements Block {
     }
 
     @Override
-    public void setType(Material type, boolean applyPhysics) {
-        setTypeId(type.getId(), applyPhysics, true);
-    }
-
-    @Override
     public void setType(Material type, boolean applyPhysics, boolean updateLight) {
         setTypeId(type.getId(), applyPhysics, updateLight);
     }
@@ -132,19 +127,9 @@ public class CraftBlock implements Block {
     }
 
     @Override
-    public boolean setTypeId(final int type, final boolean applyPhysics) {
-        return setTypeId(type, applyPhysics, true);
-    }
-
-    @Override
     public boolean setTypeId(final int type, final boolean applyPhysics, boolean updateLight) {
         net.minecraft.server.Block block = getNMSBlock(type);
         return setTypeIdAndData(type, (byte) block.toLegacyData(block.getBlockData()), applyPhysics, updateLight);
-    }
-
-    @Override
-    public boolean setTypeIdAndData(int type, byte data, boolean applyPhysics) {
-        return setTypeIdAndData(type, data, applyPhysics, true);
     }
 
     @Override
