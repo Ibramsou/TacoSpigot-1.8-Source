@@ -64,11 +64,16 @@ public abstract class Entity implements ICommandListener {
     public double motX;
     public double motY;
     public double motZ;
+    // IonSpigot start - Movement Cache
+    public double lastMotX;
+    public double lastMotY;
+    public double lastMotZ;
+    // IonSpigot end
     public float yaw;
     public float pitch;
     public float lastYaw;
     public float lastPitch;
-    private AxisAlignedBB boundingBox;
+    public AxisAlignedBB boundingBox; // IonSpigot - private -> public
     public boolean onGround;
     public boolean positionChanged;
     public boolean E;
@@ -129,6 +134,7 @@ public abstract class Entity implements ICommandListener {
     public boolean valid; // CraftBukkit
     public org.bukkit.projectiles.ProjectileSource projectileSource; // CraftBukkit - For projectiles only
     public boolean forceExplosionKnockback; // CraftBukkit - SPIGOT-949
+    public boolean isCannoningEntity; // IonSpigot
     public boolean inUnloadedChunk = false; // PaperSpigot - Remove entities in unloaded chunks
     public boolean loadChunks = false; // PaperSpigot - Entities can load chunks they move through and keep them loaded
 
@@ -175,6 +181,7 @@ public abstract class Entity implements ICommandListener {
             this.defaultActivationState = false;
         }
         // Spigot end
+        this.isCannoningEntity = this instanceof EntityTNTPrimed || this instanceof EntityFallingBlock; // IonSpigot
 
         this.datawatcher = new DataWatcher(this);
         this.datawatcher.a(0, Byte.valueOf((byte) 0));
@@ -422,11 +429,30 @@ public abstract class Entity implements ICommandListener {
      * PaperSpigot - Load surrounding chunks the entity is moving through
      */
     public void loadChunks() {
+        // IonSpigot start - Fix Load Chunks
+        /*
+        This implementation is flawed, as it does not work properly in south and east directions.
+        The reason for this is because the motion would be negative in those directions which
+        would cause the checks to fail, as it is missing min and max checks.
+
+        Now you're going to be saying my cannon loaded chunks in those directions,
+        you are right about that, the reason it works is because theres an additional layer
+        of chunk loading, I personally believe this method is meant to ensure that the current position
+        is loaded as it isn't guaranteed that the entity will move at all.
+
+        This additional layer is located in the getCubes method, we can remove the excess logic from here
+        and take advantage of that with the triangle patch that was implemented in TacoSpigot
+        this allows for triangle chunk loading allowing to us to reduce chunks loaded by cannons.
         for (int cx = (int) locX >> 4; cx <= (int) (locX + motX) >> 4; ++cx) {
             for (int cz = (int) locZ >> 4; cz <= (int) (locZ + motZ) >> 4; ++cz) {
                 ((ChunkProviderServer) world.chunkProvider).getChunkAt(cx, cz);
             }
         }
+         */
+        int chunkX = org.bukkit.util.NumberConversions.floor(locX) >> 4;
+        int chunkZ = org.bukkit.util.NumberConversions.floor(locZ) >> 4;
+        ((ChunkProviderServer) world.chunkProvider).getChunkAt(chunkX, chunkZ);
+        // IonSpigot End
     }
 
 
@@ -436,6 +462,15 @@ public abstract class Entity implements ICommandListener {
             this.a(this.getBoundingBox().c(d0, d1, d2));
             this.recalcPosition();
         } else {
+            // IonSpigot start - Movement Cache
+            this.lastMotX = this.motX;
+            this.lastMotY = this.motY;
+            this.lastMotZ = this.motZ;
+
+            if (world.movementCache.move(this)) {
+                return;
+            }
+            // IonSpigot end
             // CraftBukkit start - Don't do anything if we aren't moving
             // We need to do this regardless of whether or not we are moving thanks to portals
             try {
@@ -704,6 +739,7 @@ public abstract class Entity implements ICommandListener {
             if (d7 != d1) {
                 block.a(this.world, this);
             }
+            world.movementCache.cache(this); // IonSpigot - Movement Cache
 
             // CraftBukkit start
             if (positionChanged && getBukkitEntity() instanceof Vehicle) {
@@ -1084,6 +1120,14 @@ public abstract class Entity implements ICommandListener {
         float f2 = (float) (this.locZ - entity.locZ);
 
         return MathHelper.c(f * f + f1 * f1 + f2 * f2);
+    }
+
+    public double distanceSquared(double d0, double d1, double d2) {
+        double d3 = this.locX - d0;
+        double d4 = this.locY - d1;
+        double d5 = this.locZ - d2;
+
+        return d3 * d3 + d4 * d4 + d5 * d5;
     }
 
     public double e(double d0, double d1, double d2) {

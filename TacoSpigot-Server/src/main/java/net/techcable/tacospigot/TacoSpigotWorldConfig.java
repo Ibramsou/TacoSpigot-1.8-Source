@@ -110,4 +110,31 @@ public class TacoSpigotWorldConfig {
 
     public boolean disableFallingBlockStackingAt256;
     private void DisableFallingBlockStackingAt256() { disableFallingBlockStackingAt256 = getBoolean("disable-falling-block-stacking-at-256", false);}
+
+    // IonSpigot Start
+    public boolean constantExplosions;
+    private void ConstantExplosions() {
+        constantExplosions = getBoolean("explosions.constant-radius", false);
+    }
+
+    public boolean explosionProtectedRegions;
+    private void ExplosionProtectedRegions() {
+        explosionProtectedRegions = getBoolean("explosions.protected-regions", true);
+    }
+
+    public boolean reducedDensityRays;
+    private void ReducedDensityRays() {
+        reducedDensityRays = getBoolean("explosions.reduced-density-rays", false);
+    }
+
+    public boolean movementCache;
+    private void MovementCache() {
+        movementCache = getBoolean("movement.cache", true);
+    }
+
+    public boolean useCannonTracker;
+    private void CannonTracker() {
+        useCannonTracker = getBoolean("tnt.use-faster-tracker", false);
+    }
+    // IonSpigot End
 }

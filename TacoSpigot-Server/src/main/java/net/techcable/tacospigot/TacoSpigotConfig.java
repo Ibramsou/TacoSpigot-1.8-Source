@@ -15,6 +15,7 @@ import net.minecraft.server.MinecraftServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.google.common.base.Throwables;
@@ -108,4 +109,24 @@ public class TacoSpigotConfig {
     private static void useArraysForBlockStates() {
         useArraysForBlockStates = getBoolean("useArraysForBlockStates", false);
     }
+
+    // IonSpigot Start
+    public static boolean usePandaWire;
+    public static boolean optimisedGlowstone;
+    private static void UsePandaWire() {
+        boolean pandawire = getAndRemove("redstone.panda-wire", true);
+        usePandaWire = getBoolean("redstone.panda-wire.enabled", pandawire);
+        optimisedGlowstone = getBoolean("redstone.panda-wire.optimised", false);
+    }
+
+    private static <T> T getAndRemove(String path, T t) {
+        Object obj = config.get(path, t);
+        // Let's assume it's not what we're expecting
+        if (t != null && obj instanceof MemorySection)
+            return t;
+        config.addDefault(path, null);
+        config.set(path, null);
+        return (T) obj;
+    }
+    // IonSpigot End
 }

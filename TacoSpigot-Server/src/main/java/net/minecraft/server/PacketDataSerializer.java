@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.ByteBufProcessor;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
+import io.netty.util.ByteProcessor;
 import io.netty.util.ReferenceCounted;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -16,9 +17,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -105,36 +108,28 @@ public class PacketDataSerializer extends ByteBuf {
     }
 
     public int e() {
+        byte b0;
         int i = 0;
         int j = 0;
-
-        byte b0;
-
         do {
-            b0 = this.readByte();
-            i |= (b0 & 127) << j++ * 7;
-            if (j > 5) {
+            b0 = readByte();
+            i |= (b0 & Byte.MAX_VALUE) << j++ * 7;
+            if (j > 5)
                 throw new RuntimeException("VarInt too big");
-            }
-        } while ((b0 & 128) == 128);
-
+        } while ((b0 & 0x80) == 128);
         return i;
     }
 
     public long f() {
+        byte b0;
         long i = 0L;
         int j = 0;
-
-        byte b0;
-
         do {
-            b0 = this.readByte();
-            i |= (long) (b0 & 127) << j++ * 7;
-            if (j > 10) {
+            b0 = readByte();
+            i |= (long) (b0 & Byte.MAX_VALUE) << j++ * 7;
+            if (j > 10)
                 throw new RuntimeException("VarLong too big");
-            }
-        } while ((b0 & 128) == 128);
-
+        } while ((b0 & 0x80) == 128);
         return i;
     }
 
@@ -189,7 +184,7 @@ public class PacketDataSerializer extends ByteBuf {
         } else {
             this.readerIndex(i);
             try {
-                return NBTCompressedStreamTools.a((DataInput) (new ByteBufInputStream(this)), new NBTReadLimiter(2097152L));
+                return NBTCompressedStreamTools.a((DataInput) (new ByteBufInputStream(this)), new NBTReadLimiter(50000L));
             } catch (IOException ioexception) {
                 throw new EncoderException(ioexception);
             }
@@ -247,20 +242,15 @@ public class PacketDataSerializer extends ByteBuf {
 
     public String c(int i) {
         int j = this.e();
-
-        if (j > i * 4) {
-            throw new DecoderException("The received encoded string buffer length is longer than maximum allowed (" + j + " > " + i * 4 + ")");
-        } else if (j < 0) {
+        if (j > i * 4)
+            throw new DecoderException("The received encoded string buffer length is longer than maximum allowed (" + j + " > " + (i * 4) + ")");
+        if (j < 0)
             throw new DecoderException("The received encoded string buffer length is less than zero! Weird string!");
-        } else {
-            String s = new String(this.readBytes(j).array(), Charsets.UTF_8);
-
-            if (s.length() > i) {
-                throw new DecoderException("The received string length is longer than maximum allowed (" + j + " > " + i + ")");
-            } else {
-                return s;
-            }
-        }
+        String s = toString(readerIndex(), j, StandardCharsets.UTF_8);
+        readerIndex(readerIndex() + j);
+        if (s.length() > i)
+            throw new DecoderException("The received string length is longer than maximum allowed (" + j + " > " + i + ")");
+        return s;
     }
 
     public PacketDataSerializer a(String s) {
@@ -305,6 +295,14 @@ public class PacketDataSerializer extends ByteBuf {
 
     public boolean isDirect() {
         return this.a.isDirect();
+    }
+
+    public boolean isReadOnly() {
+        return this.a.isReadOnly();
+    }
+
+    public ByteBuf asReadOnly() {
+        return this.a.asReadOnly();
     }
 
     public int readerIndex() {
@@ -407,24 +405,52 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.getShort(i);
     }
 
+    public short getShortLE(int i) {
+        return this.a.getShortLE(i);
+    }
+
     public int getUnsignedShort(int i) {
         return this.a.getUnsignedShort(i);
+    }
+
+    public int getUnsignedShortLE(int i) {
+        return this.a.getUnsignedShortLE(i);
     }
 
     public int getMedium(int i) {
         return this.a.getMedium(i);
     }
 
+    public int getMediumLE(int i) {
+        return this.a.getMediumLE(i);
+    }
+
     public int getUnsignedMedium(int i) {
         return this.a.getUnsignedMedium(i);
+    }
+
+    public int getUnsignedMediumLE(int i) {
+        return this.a.getUnsignedMediumLE(i);
     }
 
     public int getInt(int i) {
         return this.a.getInt(i);
     }
 
+    public int getIntLE(int i) {
+        return this.a.getIntLE(i);
+    }
+
     public long getUnsignedInt(int i) {
         return this.a.getUnsignedInt(i);
+    }
+
+    public long getUnsignedIntLE(int i) {
+        return this.a.getUnsignedIntLE(i);
+    }
+
+    public long getLongLE(int i) {
+        return this.a.getLongLE(i);
     }
 
     public long getLong(int i) {
@@ -475,6 +501,16 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.getBytes(i, gatheringbytechannel, j);
     }
 
+    @Override
+    public int getBytes(int i, FileChannel fileChannel, long l, int i1) throws IOException {
+        return this.a.getBytes(i, fileChannel, l, i1);
+    }
+
+    @Override
+    public CharSequence getCharSequence(int i, int j, Charset charset) {
+        return this.a.getCharSequence(i, j, charset);
+    }
+
     public ByteBuf setBoolean(int i, boolean flag) {
         return this.a.setBoolean(i, flag);
     }
@@ -487,16 +523,36 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.setShort(i, j);
     }
 
+    @Override
+    public ByteBuf setShortLE(int i, int j) {
+        return this.a.setShortLE(i, j);
+    }
+
     public ByteBuf setMedium(int i, int j) {
         return this.a.setMedium(i, j);
+    }
+
+    @Override
+    public ByteBuf setMediumLE(int i, int j) {
+        return this.a.setMediumLE(i, j);
     }
 
     public ByteBuf setInt(int i, int j) {
         return this.a.setInt(i, j);
     }
 
+    @Override
+    public ByteBuf setIntLE(int i, int j) {
+        return this.a.setIntLE(i, j);
+    }
+
     public ByteBuf setLong(int i, long j) {
         return this.a.setLong(i, j);
+    }
+
+    @Override
+    public ByteBuf setLongLE(int i, long j) {
+        return this.a.setLongLE(i, j);
     }
 
     public ByteBuf setChar(int i, int j) {
@@ -543,8 +599,18 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.setBytes(i, scatteringbytechannel, j);
     }
 
+    @Override
+    public int setBytes(int i, FileChannel filechannel, long j, int k) throws IOException {
+        return this.a.setBytes(i, filechannel, j, k);
+    }
+
     public ByteBuf setZero(int i, int j) {
         return this.a.setZero(i, j);
+    }
+
+    @Override
+    public int setCharSequence(int i, CharSequence charsequence, Charset charset) {
+        return this.a.setCharSequence(i, charsequence, charset);
     }
 
     public boolean readBoolean() {
@@ -563,28 +629,63 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.readShort();
     }
 
+    @Override
+    public short readShortLE() {
+        return this.a.readShortLE();
+    }
+
     public int readUnsignedShort() {
         return this.a.readUnsignedShort();
+    }
+
+    @Override
+    public int readUnsignedShortLE() {
+        return this.a.readUnsignedShortLE();
     }
 
     public int readMedium() {
         return this.a.readMedium();
     }
 
+    @Override
+    public int readMediumLE() {
+        return this.a.readMediumLE();
+    }
+
     public int readUnsignedMedium() {
         return this.a.readUnsignedMedium();
+    }
+
+    @Override
+    public int readUnsignedMediumLE() {
+        return this.a.readUnsignedMediumLE();
     }
 
     public int readInt() {
         return this.a.readInt();
     }
 
+    @Override
+    public int readIntLE() {
+        return this.a.readIntLE();
+    }
+
     public long readUnsignedInt() {
         return this.a.readUnsignedInt();
     }
 
+    @Override
+    public long readUnsignedIntLE() {
+        return this.a.readUnsignedIntLE();
+    }
+
     public long readLong() {
         return this.a.readLong();
+    }
+
+    @Override
+    public long readLongLE() {
+        return this.a.readLongLE();
     }
 
     public char readChar() {
@@ -606,6 +707,12 @@ public class PacketDataSerializer extends ByteBuf {
     public ByteBuf readSlice(int i) {
         return this.a.readSlice(i);
     }
+
+    @Override
+    public ByteBuf readRetainedSlice(int i) {
+        return this.a.readRetainedSlice(i);
+    }
+
 
     public ByteBuf readBytes(ByteBuf bytebuf) {
         return this.a.readBytes(bytebuf);
@@ -639,6 +746,16 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.readBytes(gatheringbytechannel, i);
     }
 
+    @Override
+    public CharSequence readCharSequence(int i, Charset charset) {
+        return this.a.readCharSequence(i, charset);
+    }
+
+    @Override
+    public int readBytes(FileChannel filechannel, long i, int j) throws IOException {
+        return this.a.readBytes(filechannel, i, j);
+    }
+
     public ByteBuf skipBytes(int i) {
         return this.a.skipBytes(i);
     }
@@ -655,16 +772,36 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.writeShort(i);
     }
 
+    @Override
+    public ByteBuf writeShortLE(int i) {
+        return this.a.writeShortLE(i);
+    }
+
     public ByteBuf writeMedium(int i) {
         return this.a.writeMedium(i);
+    }
+
+    @Override
+    public ByteBuf writeMediumLE(int i) {
+        return this.a.writeMediumLE(i);
     }
 
     public ByteBuf writeInt(int i) {
         return this.a.writeInt(i);
     }
 
+    @Override
+    public ByteBuf writeIntLE(int i) {
+        return this.a.writeIntLE(i);
+    }
+
     public ByteBuf writeLong(long i) {
         return this.a.writeLong(i);
+    }
+
+    @Override
+    public ByteBuf writeLongLE(long i) {
+        return this.a.writeLongLE(i);
     }
 
     public ByteBuf writeChar(int i) {
@@ -711,8 +848,16 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.writeBytes(scatteringbytechannel, i);
     }
 
+    public int writeBytes(FileChannel filechannel, long i, int j) throws IOException {
+        return this.a.writeBytes(filechannel, i, j);
+    }
+
     public ByteBuf writeZero(int i) {
         return this.a.writeZero(i);
+    }
+
+    public int writeCharSequence(CharSequence charsequence, Charset charset) {
+        return this.a.writeCharSequence(charsequence, charset);
     }
 
     public int indexOf(int i, int j, byte b0) {
@@ -729,6 +874,23 @@ public class PacketDataSerializer extends ByteBuf {
 
     public int bytesBefore(int i, int j, byte b0) {
         return this.a.bytesBefore(i, j, b0);
+    }
+
+    public int forEachByte(int i, int j, ByteProcessor byteprocessor) {
+        return this.a.forEachByte(i, j, byteprocessor);
+    }
+
+    public int forEachByte(ByteProcessor byteprocessor) {
+        return this.a.forEachByte(byteprocessor);
+    }
+
+    @Override
+    public int forEachByteDesc(ByteProcessor byteprocessor) {
+        return this.a.forEachByteDesc(byteprocessor);
+    }
+
+    public int forEachByteDesc(int i, int j, ByteProcessor byteprocessor) {
+        return this.a.forEachByteDesc(i, j, byteprocessor);
     }
 
     public int forEachByte(ByteBufProcessor bytebufprocessor) {
@@ -759,12 +921,27 @@ public class PacketDataSerializer extends ByteBuf {
         return this.a.slice();
     }
 
+    @Override
+    public ByteBuf retainedSlice() {
+        return this.a.retainedSlice();
+    }
+
     public ByteBuf slice(int i, int j) {
         return this.a.slice(i, j);
     }
 
+    @Override
+    public ByteBuf retainedSlice(int i, int i1) {
+        return this.a.readRetainedSlice(i);
+    }
+
     public ByteBuf duplicate() {
         return this.a.duplicate();
+    }
+
+    @Override
+    public ByteBuf retainedDuplicate() {
+        return this.a.retainedDuplicate();
     }
 
     public int nioBufferCount() {
@@ -841,6 +1018,14 @@ public class PacketDataSerializer extends ByteBuf {
 
     public ByteBuf retain() {
         return this.a.retain();
+    }
+
+    public ByteBuf touch() {
+        return this.a.touch();
+    }
+
+    public ByteBuf touch(Object o) {
+        return this.a.touch(o);
     }
 
     public int refCnt() {
