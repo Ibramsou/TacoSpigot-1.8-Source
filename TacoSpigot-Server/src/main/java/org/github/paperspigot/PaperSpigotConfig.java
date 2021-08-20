@@ -188,8 +188,8 @@ public class PaperSpigotConfig
             maxStack = Material.class.getDeclaredField("maxStack");
             maxStack.setAccessible(true);
 
-            // Ibramsou Start - Java 11 doesn't allow modifiers
-            if (Bukkit.JAVA_VERSION < 11) {
+            // Ibramsou Start - Java 9 doesn't allow modifiers
+            if (Bukkit.JAVA_VERSION < 9) {
                 Field modifiers = Field.class.getDeclaredField("modifiers");
                 modifiers.setAccessible(true);
                 modifiers.setInt(maxStack, maxStack.getModifiers() & ~Modifier.FINAL);
