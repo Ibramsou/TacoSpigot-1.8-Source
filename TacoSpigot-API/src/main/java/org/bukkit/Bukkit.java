@@ -47,6 +47,9 @@ import org.bukkit.inventory.meta.ItemMeta;
  * Represents the Bukkit core, for version and Server singleton handling
  */
 public final class Bukkit {
+
+    public static int JAVA_VERSION = Integer.parseInt(System.getProperty("java.specification.version"));
+
     private static Server server;
 
     /**

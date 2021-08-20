@@ -10,7 +10,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.logging.Level;
 
-import net.minecraft.server.Item;
 import net.minecraft.server.Items;
 import net.minecraft.server.MinecraftServer;
 import org.apache.commons.lang.StringUtils;
@@ -189,9 +188,13 @@ public class PaperSpigotConfig
             maxStack = Material.class.getDeclaredField("maxStack");
             maxStack.setAccessible(true);
 
-            Field modifiers = Field.class.getDeclaredField("modifiers");
-            modifiers.setAccessible(true);
-            modifiers.setInt(maxStack, maxStack.getModifiers() & ~Modifier.FINAL);
+            // Ibramsou Start - Java 11 doesn't allow modifiers
+            if (Bukkit.JAVA_VERSION < 11) {
+                Field modifiers = Field.class.getDeclaredField("modifiers");
+                modifiers.setAccessible(true);
+                modifiers.setInt(maxStack, maxStack.getModifiers() & ~Modifier.FINAL);
+            }
+            // Ibramsou End
         } catch (Exception e) {
             e.printStackTrace();
             return;

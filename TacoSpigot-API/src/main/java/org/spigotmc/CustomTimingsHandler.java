@@ -26,11 +26,9 @@ package org.spigotmc;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.AuthorNagException;
 import org.bukkit.plugin.Plugin;
-import co.aikar.timings.NullTimingHandler;
 import co.aikar.timings.Timing;
 import co.aikar.timings.Timings;
 import co.aikar.timings.TimingsManager;
-import sun.reflect.Reflection;
 
 import java.lang.reflect.Method;
 import java.util.logging.Level;
@@ -47,12 +45,29 @@ import java.util.logging.Level;
 public final class CustomTimingsHandler {
     private final Timing handler;
 
+    private static Method callerClassMethod;
+    private static boolean checkMethod = true;
+
     public CustomTimingsHandler(String name) {
         Timing timing;
 
+        // Ibramsou Start - Allow recent java versions to use this class
+        if (checkMethod && Bukkit.JAVA_VERSION == 8) {
+            try {
+                final Class<?> reflectClass = Class.forName("sun.reflect.Reflection");
+                callerClassMethod = reflectClass.getDeclaredMethod("getCallerClass", int.class);
+            } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+                // Ignore this
+            }
+
+            checkMethod = false;
+        }
+
         Plugin plugin = null;
         try {
-             plugin = TimingsManager.getPluginByClassloader(Reflection.getCallerClass(2));
+            final Class<?> callingClass = callerClassMethod == null ? Class.forName(Thread.currentThread().getStackTrace()[2].getClassName()) : (Class<?>) callerClassMethod.invoke(null, 2);
+             plugin = TimingsManager.getPluginByClassloader(callingClass);
+             // Ibramsou End
         } catch (Exception ignored) {}
 
         new AuthorNagException("Deprecated use of CustomTimingsHandler. Please Switch to Timings.of ASAP").printStackTrace();

@@ -39,3 +39,6 @@ manifest.mf
 Paperclip
 work
 build
+
+# Debug
+/local/
