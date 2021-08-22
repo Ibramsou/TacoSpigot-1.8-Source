@@ -48,7 +48,15 @@ import org.bukkit.inventory.meta.ItemMeta;
  */
 public final class Bukkit {
 
-    public static int JAVA_VERSION = Integer.parseInt(System.getProperty("java.specification.version"));
+    // Ibramsou Start - get Java version
+    public static final int JAVA_VERSION;
+
+    static {
+        final String ver = System.getProperty("java.version");
+        final String[] parts = ver.split("\\.");
+        JAVA_VERSION = Integer.parseInt(parts[0].equals("1") ? parts[1] : parts[0]);
+    }
+    // Ibramsou End
 
     private static Server server;
 
